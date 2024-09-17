@@ -84,7 +84,7 @@ class InterfaceBuilder:
     def create_block(self, command_schema: CommandSchema):
         logger = Logger()
 
-        with Blocks(theme=self.theme.value, css=".built-with {visibility: hidden !important;}") as block:
+        with Blocks(theme=self.theme.value) as block:
             self.render_help_and_header(command_schema)
             with gr.Row():
                 with gr.Column():
