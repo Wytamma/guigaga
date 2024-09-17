@@ -1,4 +1,4 @@
-# guigaga
+# All We Need Is GUI Ga Ga!
 
 [![PyPI - Version](https://img.shields.io/pypi/v/guigaga.svg)](https://pypi.org/project/guigaga)
 [![PyPI - Python Version](https://img.shields.io/pypi/pyversions/guigaga.svg)](https://pypi.org/project/guigaga)
