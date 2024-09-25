@@ -2,6 +2,7 @@
 /.pytest_cache
 /dist
 *.pyc
+*.pyi
 .snakemake
 reads
 Note.md

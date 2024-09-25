@@ -32,12 +32,38 @@ def gui(
     queue_kwargs: Optional[dict] = None,
     catch_errors: bool = True,
 ) -> Callable:
+    """
+    Creates a decorator for a click command or group to add a GUI interface.
+
+    Args:
+      name (Optional[str]): The name of the application. Defaults to None.
+      command_name (str): The name of the command to open the GUI. Defaults to "gui".
+      message (str): The message to display when the GUI is opened. Defaults to "Open Gradio GUI."
+      theme (Theme): The theme to use for the GUI. Defaults to Theme.soft.
+      hide_not_required (bool): Whether to hide options that are not required. Defaults to False.
+      allow_file_download (bool): Whether to allow file downloads. Defaults to False.
+      launch_kwargs (Optional[dict]): Additional keyword arguments to pass to the launch method. Defaults to None.
+      queue_kwargs (Optional[dict]): Additional keyword arguments to pass to the queue method. Defaults to None.
+      catch_errors (bool): Whether to catch and display errors in the GUI. Defaults to True.
+
+    Returns:
+      Callable: A decorator that can be used to add a GUI to a click command or group.
+    """
     if launch_kwargs is None:
         launch_kwargs = {}
     if queue_kwargs is None:
         queue_kwargs = {}
 
     def decorator(app: Union[click.Group, click.Command]):
+        """
+        A decorator that adds a GUI to a click command or group.
+
+        Args:
+            app (Union[click.Group, click.Command]): The click command or group to add the GUI to.
+
+        Returns:
+            Union[click.Group, click.Command]: The click command or group with the added GUI.
+        """
         @click.pass_context
         @click.option(
             "--share",
@@ -61,6 +87,22 @@ def gui(
             help="Port number to use for sharing the GUI."
         )
         def wrapped_gui(ctx, share, host, port):  # noqa: ARG001
+            """
+            A click command that launches the GUI.
+
+            Args:
+                ctx (click.Context): The click context.
+                share (bool): Whether to share the GUI over the internet.
+                host (str): The host address to use for sharing the GUI.
+                port (int): The port number to use for sharing the GUI.
+
+            Side Effects:
+                Modifies the launch_kwargs dictionary based on the CLI inputs.
+                Launches the GUI.
+
+            Notes:
+                This function is decorated with click.pass_context, and click.option for "share", "host", and "port".
+            """
             # Mapping of CLI option names to launch_kwargs keys
             cli_mappings = {
                 "share": "share",

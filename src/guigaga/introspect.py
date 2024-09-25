@@ -10,15 +10,44 @@ from click import BaseCommand, ParamType
 
 
 def generate_unique_id():
+    """
+    Generates a unique identifier.
+
+    Returns:
+      str: A unique identifier string.
+
+    Examples:
+      >>> generate_unique_id()
+      'id_1234abcd'
+    """
     return f"id_{str(uuid.uuid4())[:8]}"
 
 
 @dataclass
 class MultiValueParamData:
+    """
+    A data class for storing multiple values from a command line interface (CLI) option.
+
+    Attributes:
+      values (list[tuple[int | float | str]]): A list of tuples containing the values.
+    """
     values: list[tuple[int | float | str]]
 
     @staticmethod
     def process_cli_option(value) -> "MultiValueParamData":
+        """
+        Processes a CLI option value into a MultiValueParamData instance.
+
+        Args:
+          value (Any): The value to process.
+
+        Returns:
+          MultiValueParamData: A MultiValueParamData instance containing the processed value.
+
+        Examples:
+          >>> MultiValueParamData.process_cli_option(('a', 'b', 'c'))
+          MultiValueParamData(values=[('a', 'b', 'c')])
+        """
         if value is None:
             value = MultiValueParamData([])
         elif isinstance(value, tuple):
@@ -36,6 +65,27 @@ class MultiValueParamData:
 
 @dataclass
 class OptionSchema:
+    """
+    A data class for defining the schema of a CLI option.
+
+    Attributes:
+      name (list[str]): The names of the option.
+      type (ParamType): The type of the option.
+      default (MultiValueParamData | None): The default value of the option.
+      required (bool): Whether the option is required.
+      is_flag (bool): Whether the option is a flag.
+      is_boolean_flag (bool): Whether the option is a boolean flag.
+      flag_value (Any): The value of the flag.
+      opts (list): Additional options.
+      counting (bool): Whether the option is counting.
+      secondary_opts (list): Secondary options.
+      key (str | tuple[str]): The key for the option.
+      help (str | None): The help text for the option.
+      choices (Sequence[str] | None): The choices for the option.
+      multiple (bool): Whether the option can have multiple values.
+      multi_value (bool): Whether the option is a multi-value option.
+      nargs (int): The number of arguments for the option.
+    """
     name: list[str]
     type: ParamType
     default: MultiValueParamData | None = None
@@ -54,11 +104,27 @@ class OptionSchema:
     nargs: int = 1
 
     def __post_init__(self):
+        """
+        Post-initialization method for OptionSchema. Sets the multi_value attribute based on the type attribute.
+        """
         self.multi_value = isinstance(self.type, click.Tuple)
 
 
 @dataclass
 class ArgumentSchema:
+    """
+    A data class for defining the schema of a CLI argument.
+
+    Attributes:
+      name (str): The name of the argument.
+      type (str): The type of the argument.
+      required (bool): Whether the argument is required.
+      key (str): The key for the argument.
+      default (MultiValueParamData | None): The default value of the argument.
+      choices (Sequence[str] | None): The choices for the argument.
+      multiple (bool): Whether the argument can have multiple values.
+      nargs (int): The number of arguments for the argument.
+    """
     name: str
     type: str
     required: bool = False
@@ -71,6 +137,20 @@ class ArgumentSchema:
 
 @dataclass
 class CommandSchema:
+    """
+    A data class for defining the schema of a CLI command.
+
+    Attributes:
+      name (CommandName): The name of the command.
+      function (Callable[..., Any | None]): The function to execute when the command is called.
+      key (str): The key for the command.
+      docstring (str | None): The docstring for the command.
+      options (list[OptionSchema]): The options for the command.
+      arguments (list[ArgumentSchema]): The arguments for the command.
+      subcommands (dict["CommandName", "CommandSchema"]): The subcommands for the command.
+      parent (CommandSchema | None): The parent command.
+      is_group (bool): Whether the command is a group command.
+    """
     name: CommandName
     function: Callable[..., Any | None]
     key: str = field(default_factory=generate_unique_id)
@@ -83,6 +163,12 @@ class CommandSchema:
 
     @property
     def path_from_root(self) -> list["CommandSchema"]:
+        """
+        Gets the path from the root command to the current command.
+
+        Returns:
+          list[CommandSchema]: A list of CommandSchema instances representing the path from the root command to the current command.
+        """
         node = self
         path = [self]
         while True:

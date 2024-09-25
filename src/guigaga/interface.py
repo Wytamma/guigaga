@@ -13,6 +13,9 @@ from guigaga.types import InputParamType, OutputParamType
 
 
 class InterfaceBuilder:
+    """
+    A class to build a graphical user interface for a given command line interface.
+    """
     def __init__(
         self,
         cli: click.Group | click.Command,
@@ -25,6 +28,24 @@ class InterfaceBuilder:
         allow_file_download: bool = True,
         catch_errors: bool = True,
     ):
+        """
+        Initializes the InterfaceBuilder with the given parameters.
+
+        Args:
+          cli (click.Group | click.Command): The command line interface to build a GUI for.
+          app_name (str | None): The name of the application. Defaults to None.
+          command_name (str): The name of the command. Defaults to "gui".
+          click_context (click.Context): The context of the click command. Defaults to None.
+          theme (Theme): The theme of the GUI. Defaults to Theme.soft.
+          hide_not_required (bool): Whether to hide not required options. Defaults to False.
+          allow_file_download (bool): Whether to allow file download. Defaults to True.
+          catch_errors (bool): Whether to catch errors. Defaults to True.
+
+        Side Effects:
+          - Initializes various instance variables.
+          - Calls introspect_click_app to get the command schemas.
+          - Calls traverse_command_tree to create the interface.
+        """
         self.cli = cli
         self.app_name = app_name
         self.command_name = command_name
@@ -85,6 +106,19 @@ class InterfaceBuilder:
         raise ValueError(msg)
 
     def create_block(self, command_schema: CommandSchema):
+        """
+        Creates a block for the given command schema.
+
+        Args:
+          command_schema (CommandSchema): The command schema to create a block for.
+
+        Returns:
+          tuple: The name of the command and the created block.
+
+        Side Effects:
+          - Creates various GUI components.
+          - Defines the run_command function.
+        """
         logger = Logger()
 
         with Blocks(theme=self.theme.value) as block:
@@ -149,6 +183,15 @@ class InterfaceBuilder:
         return command_schema.name, block
 
     def get_outputs(self, command_schema: CommandSchema):
+        """
+        Gets the outputs for the given command schema.
+
+        Args:
+          command_schema (CommandSchema): The command schema to get the outputs for.
+
+        Returns:
+          list: The list of outputs.
+        """
         outputs = []
         for schema in command_schema.options + command_schema.arguments:
             if isinstance(schema.type, OutputParamType):
@@ -156,6 +199,15 @@ class InterfaceBuilder:
         return outputs
 
     def get_output_values(self, command_schema: CommandSchema):
+        """
+        Gets the output values for the given command schema.
+
+        Args:
+          command_schema (CommandSchema): The command schema to get the output values for.
+
+        Returns:
+          list: The list of output values.
+        """
         outputs = []
         for schema in command_schema.options + command_schema.arguments:
             if isinstance(schema.type, OutputParamType):
@@ -163,13 +215,42 @@ class InterfaceBuilder:
         return outputs
 
     def render_help_and_header(self, command_schema: CommandSchema):
+        """
+        Renders the help and header for the given command schema.
+
+        Args:
+          command_schema (CommandSchema): The command schema to render the help and header for.
+
+        Side Effects:
+          - Renders the help and header.
+        """
         gr.Markdown(f"""# {command_schema.name}""")
         gr.Markdown(command_schema.docstring)
 
     def has_advanced_options(self, command_schema: CommandSchema):
+        """
+        Checks if the given command schema has advanced options.
+
+        Args:
+          command_schema (CommandSchema): The command schema to check.
+
+        Returns:
+          bool: True if the command schema has advanced options, False otherwise.
+        """
         return any(not schema.required for schema in command_schema.options + command_schema.arguments)
 
     def render_schemas(self, command_schema, *, render_required=True, render_not_required=True):
+        """
+        Renders the schemas for the given command schema.
+
+        Args:
+          command_schema (CommandSchema): The command schema to render the schemas for.
+          render_required (bool): Whether to render required schemas. Defaults to True.
+          render_not_required (bool): Whether to render not required schemas. Defaults to True.
+
+        Returns:
+          dict: The rendered schemas.
+        """
         inputs = {}
         schemas = command_schema.options + command_schema.arguments
         schemas = [
@@ -186,12 +267,31 @@ class InterfaceBuilder:
         return inputs
 
     def sort_schemas(self, command_schema, schemas: dict):
+        """
+        Sorts the given schemas based on the order of the command schema's function arguments.
+
+        Args:
+          command_schema (CommandSchema): The command schema to sort the schemas based on.
+          schemas (dict): The schemas to sort.
+
+        Returns:
+          list: The sorted schemas.
+        """
         function = getattr(command_schema.function, "__wrapped__", command_schema.function)
         order = function.__code__.co_varnames[: function.__code__.co_argcount]
         schemas = [schemas[name] for name in order if name in schemas]
         return schemas
 
     def get_component(self, schema: OptionSchema | ArgumentSchema):
+        """
+        Gets the component for the given schema.
+
+        Args:
+          schema (OptionSchema | ArgumentSchema): The schema to get the component for.
+
+        Returns:
+          gradio.Interface: The component for the given schema.
+        """
 
         default = None
         if schema.default.values:

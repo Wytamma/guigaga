@@ -12,22 +12,62 @@ from guigaga.introspect import ArgumentSchema, OptionSchema
 
 
 class ParamType(ClickParamType, ABC):
+    """
+    An abstract base class that inherits from ClickParamType and ABC. It provides a blueprint for parameter types.
+    """
     @abstractmethod
     def render(self, schema: OptionSchema | ArgumentSchema) -> Component:
+        """
+        An abstract method that must be implemented by any class that inherits from ParamType.
+
+        Args:
+          schema (OptionSchema | ArgumentSchema): The schema to render.
+
+        Returns:
+          Component: The rendered component.
+        """
         pass
 
 class InputParamType(ParamType):
+    """
+    A class that inherits from ParamType. It represents an input parameter type.
+    """
     pass
 
 class OutputParamType(ParamType):
+    """
+    A class that inherits from ParamType. It represents an output parameter type.
+    """
     pass
 
 
 class FilePath(File):
+    """
+    A class that inherits from File. It represents a file path.
+    """
     def __init__(self, *args, **kwargs):
+        """
+        Initializes a FilePath instance.
+
+        Args:
+          *args: Variable length argument list.
+          **kwargs: Arbitrary keyword arguments.
+        """
         super().__init__(*args, **kwargs)
 
     def _process_single_file(self, f) -> pathlib.Path | bytes:
+        """
+        Processes a single file.
+
+        Args:
+          f: The file to process.
+
+        Returns:
+          pathlib.Path | bytes: The processed file.
+
+        Raises:
+          ValueError: If the file type is unknown.
+        """
         file_name = f.path
         if self.type == "filepath":
             file = tempfile.NamedTemporaryFile(delete=False, dir=self.GRADIO_CACHE)
@@ -44,18 +84,57 @@ class FilePath(File):
             )
 
 class Upload(InputParamType, ClickPath):
+    """
+    A class that inherits from InputParamType and ClickPath. It represents an upload parameter type.
+    """
     def __init__(self, *args, **kwargs):
+        """
+        Initializes an Upload instance.
+
+        Args:
+          *args: Variable length argument list.
+          **kwargs: Arbitrary keyword arguments.
+        """
         super().__init__(*args, **kwargs)
 
 
     def render(self, schema: OptionSchema | ArgumentSchema) -> Component:
+        """
+        Renders the upload component.
+
+        Args:
+          schema (OptionSchema | ArgumentSchema): The schema to render.
+
+        Returns:
+          Component: The rendered component.
+        """
         return File(label=schema.name)
 
 
 class Download(OutputParamType, ClickPath):
+    """
+    A class that inherits from OutputParamType and ClickPath. It represents a download parameter type.
+    """
     def __init__(self, filename, *args, **kwargs):
+        """
+        Initializes a Download instance.
+
+        Args:
+          filename: The name of the file to download.
+          *args: Variable length argument list.
+          **kwargs: Arbitrary keyword arguments.
+        """
         super().__init__(*args, **kwargs)
         self.value = filename
 
     def render(self, schema: OptionSchema | ArgumentSchema) -> Component:
+        """
+        Renders the download component.
+
+        Args:
+          schema (OptionSchema | ArgumentSchema): The schema to render.
+
+        Returns:
+          Component: The rendered component.
+        """
         return File(label=schema.name)

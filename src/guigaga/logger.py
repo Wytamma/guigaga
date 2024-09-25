@@ -12,11 +12,37 @@ from typing import Callable, Generator
 class CapturingStream(io.StringIO):
     """Stream to capture stdout/stderr line by line and put them in a queue."""
     def __init__(self, queue: mpQueue, *args, **kwargs):
+        """
+        Initializes a new instance of the CapturingStream class.
+
+        Args:
+          queue (mpQueue): The queue to put the captured lines in.
+          *args: Variable length argument list.
+          **kwargs: Arbitrary keyword arguments.
+
+        Side Effects:
+          Initializes the _queue attribute with the provided queue and the _current_line attribute to an empty string.
+        """
         super().__init__(*args, **kwargs)
         self._queue = queue
         self._current_line = ""
 
     def write(self, s: str) -> int:
+        """
+        Writes a string to the stream and captures it line by line.
+
+        Args:
+          s (str): The string to write.
+
+        Returns:
+          int: The number of characters written.
+
+        Side Effects:
+          Writes the string to the stream and captures it line by line, putting each line in the queue.
+
+        Notes:
+          Normalizes newlines by replacing "\r" with "\\n".
+        """
         s = s.replace("\r", "\n")  # Normalize newlines
         if "\n" in s:
             lines = s.split("\n")
@@ -30,6 +56,12 @@ class CapturingStream(io.StringIO):
         return super().write(s)
 
     def flush(self):
+        """
+        Flushes the stream and captures the current line.
+
+        Side Effects:
+          If there is a current line, puts it in the queue and resets the current line to an empty string. Then flushes the stream.
+        """
         if self._current_line:
             self._queue.put(self._current_line)
             self._current_line = ""
@@ -69,11 +101,39 @@ def wrap_for_process(fn: Callable, ctx) -> Callable:
 
 
 class Logger:
+    """
+    A class for logging messages with different levels.
+
+    Attributes:
+      process: The process that the logger is logging for.
+      exit_code: The exit code of the process.
+    """
     def __init__(self):
+        """
+        Initializes a new instance of the Logger class.
+
+        Side Effects:
+          Initializes the process and exit_code attributes to None.
+        """
         self.process = None
         self.exit_code = None
 
     def log(self, message: str, level: str = "INFO"):
+        """
+        Logs a message with a specified level.
+
+        Args:
+          message (str): The message to log.
+          level (str, optional): The level of the log. Defaults to "INFO".
+
+        Returns:
+          dict: A dictionary containing the message and level.
+
+        Examples:
+          >>> logger = Logger()
+          >>> logger.log("Hello, World!")
+          {"message": "Hello, World!", "level": "INFO"}
+        """
         return {"message": message, "level": level}
 
     def _log_from_queue(self, log_queue) -> Generator[str, None, None]:
