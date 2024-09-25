@@ -36,7 +36,7 @@ class CapturingStream(io.StringIO):
         super().flush()
 
 
-def wrap_for_process(fn: Callable) -> Callable:
+def wrap_for_process(fn: Callable, ctx) -> Callable:
     """Wrap the function to capture stdout, stderr, and errors in real-time."""
     stdout_queue = mpQueue()
     stderr_queue = mpQueue()
@@ -46,18 +46,24 @@ def wrap_for_process(fn: Callable) -> Callable:
     def _inner(*args, **kwargs):
         with redirect_stdout(CapturingStream(stdout_queue)), redirect_stderr(CapturingStream(stderr_queue)):
             try:
-                fn(*args, **kwargs)
+                # Use the context within the thread
+                with ctx:
+                    fn(*args, **kwargs)
             except Exception as error:
                 msg = (
                     f"Error in '{fn.__name__}':\n" +
-                    "\n".join(line.strip("\n") for line in traceback.format_tb(error.__traceback__) if line.strip()) +
+                    "\n".join(
+                        line.strip("\n")
+                        for line in traceback.format_tb(error.__traceback__)
+                        if line.strip()
+                    ) +
                     f"\n\n{error!s}"
                 )
                 error_queue.put(msg)
 
-        # Flush final content from buffers
-        sys.stdout.flush()
-        sys.stderr.flush()
+            # Flush final content from buffers
+            sys.stdout.flush()
+            sys.stderr.flush()
 
     return stdout_queue, stderr_queue, error_queue, _inner
 
@@ -79,10 +85,12 @@ class Logger:
         except queue.Empty:
             pass
 
-    def intercept_stdin_stdout(self, fn: Callable) -> Callable:
+    def intercept_stdin_stdout(self, fn: Callable, ctx, *, catch_errors) -> Callable:
         """Wrap a function to intercept and yield stdout and stderr using threading."""
+
         def wrapped(*args, **kwargs) -> str:
-            stdout_queue, stderr_queue, error_queue, wrapped_fn = wrap_for_process(fn)
+            # Pass the context to wrap_for_process
+            stdout_queue, stderr_queue, error_queue, wrapped_fn = wrap_for_process(fn, ctx)
             thread = threading.Thread(target=wrapped_fn, args=args, kwargs=kwargs)
 
             # Start the thread
@@ -95,7 +103,7 @@ class Logger:
                 logs.extend(self._log_from_queue(stderr_queue))
                 thread.join(timeout=0.1)
 
-                # Concatenate the logs as one output (Gradio expects return)
+                # Yield logs
                 yield "\n".join(logs)
 
             # After the thread completes, yield any remaining logs
@@ -106,11 +114,14 @@ class Logger:
             try:
                 error_msg = error_queue.get_nowait()
                 self.exit_code = 1
-                logs.append(f"ERROR: {error_msg}")
+                if catch_errors:
+                    logs.append(f"ERROR: {error_msg}")
+                else:
+                    raise Exception(error_msg)
             except queue.Empty:
                 self.exit_code = 0
 
-            # Return all logs as a string for Gradio to display
+            # Return all logs as a string
             yield "\n".join(logs)
 
         return wrapped

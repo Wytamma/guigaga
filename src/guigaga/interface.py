@@ -1,7 +1,6 @@
 import uuid
 from datetime import datetime
 from importlib import metadata
-from typing import Callable
 
 import click
 import gradio as gr
@@ -10,6 +9,7 @@ from gradio import Blocks, TabbedInterface
 from guigaga.introspect import ArgumentSchema, CommandSchema, OptionSchema, introspect_click_app
 from guigaga.logger import Logger
 from guigaga.themes import Theme
+from guigaga.types import InputParamType, OutputParamType
 
 
 class InterfaceBuilder:
@@ -18,10 +18,12 @@ class InterfaceBuilder:
         cli: click.Group | click.Command,
         app_name: str | None = None,
         command_name: str = "gui",
+        click_context: click.Context = None,
         *,
         theme: Theme = Theme.soft,
         hide_not_required: bool = False,
         allow_file_download: bool = True,
+        catch_errors: bool = True,
     ):
         self.cli = cli
         self.app_name = app_name
@@ -29,8 +31,10 @@ class InterfaceBuilder:
         self.theme = theme
         self.hide_not_required = hide_not_required
         self.allow_file_download = allow_file_download
+        self.catch_errors = catch_errors
         self.command_schemas = introspect_click_app(cli)
         self.blocks = []
+        self.click_context = click_context
         try:
             self.version = metadata.version(self.click_app_name)
         except Exception:
@@ -43,7 +47,7 @@ class InterfaceBuilder:
         self.interface = self.traverse_command_tree(schemas)
 
     def traverse_command_tree(self, schema: CommandSchema):
-        """ Recursively traverse the command tree and create a tabbed interface for each nested command group """
+        """Recursively traverse the command tree and create a tabbed interface for each nested command group"""
         tab_blocks = []
         # If the current schema has no subcommands, create a block
         if not schema.subcommands:
@@ -80,7 +84,6 @@ class InterfaceBuilder:
         msg = "Could not create interface for command schema."
         raise ValueError(msg)
 
-
     def create_block(self, command_schema: CommandSchema):
         logger = Logger()
 
@@ -97,36 +100,71 @@ class InterfaceBuilder:
                         schemas = self.render_schemas(command_schema)
                 with gr.Column():
                     btn = gr.Button("Run")
-                    with gr.Tab(label="Logs"):
-                        logs = gr.Textbox(show_label=False, lines=20, max_lines=20)
+                    with gr.Tab("Output", visible=False) as output_tab:
+                        outputs = self.get_outputs(command_schema)
+                    with gr.Tab("Logs"):
+                        logs = gr.Textbox(show_label=False, lines=19, max_lines=19)
                     if self.allow_file_download:
-                        with gr.Tab(label="Files"):
+                        with gr.Tab("Files"):
                             file_explorer = gr.FileExplorer(
                                 label="Choose a file to download",
                                 file_count="single",
                                 every=1,
-                                height = 400,
+                                height=400,
                             )
-
                             output_file = gr.File(
                                 label="Download file",
                                 inputs=file_explorer,
                                 visible=False,
                             )
+
                             def update(filename):
                                 return gr.File(filename, visible=True)
+
                             file_explorer.change(update, file_explorer, output_file)
+
+            # Define the run_command function as a generator
+            def run_command(*args, **kwargs):
+                # Start the logger's wrapped function which is a generator
+                log_gen = logger.intercept_stdin_stdout(
+                    command_schema.function, self.click_context, catch_errors=self.catch_errors
+                )(*args, **kwargs)
+                logs_output = ""
+                # For each yielded log output
+                for log_chunk in log_gen:
+                    logs_output += log_chunk
+                    # Yield logs and no update for other outputs
+                    yield [logs_output, gr.Tab("Output", visible=False), None]
+                if logger.exit_code:
+                    return [logs_output, gr.Tab("Output", visible=False), None]
+                # After function completes, yield final outputs
+                # Update output_group visibility and outputs
+                render_outputs = False
+                if outputs:
+                    render_outputs = True
+                yield [logs_output, gr.Tab("Output", visible=render_outputs), *self.get_output_values(command_schema)]
+
             inputs = self.sort_schemas(command_schema, schemas)
-            btn.click(fn=logger.intercept_stdin_stdout(command_schema.function), inputs=inputs, outputs=logs)
+            btn.click(fn=run_command, inputs=inputs, outputs=[logs, output_tab, *outputs])
         return command_schema.name, block
 
+    def get_outputs(self, command_schema: CommandSchema):
+        outputs = []
+        for schema in command_schema.options + command_schema.arguments:
+            if isinstance(schema.type, OutputParamType):
+                outputs.append(schema.type.render(schema))
+        return outputs
+
+    def get_output_values(self, command_schema: CommandSchema):
+        outputs = []
+        for schema in command_schema.options + command_schema.arguments:
+            if isinstance(schema.type, OutputParamType):
+                outputs.append(schema.type.value)
+        return outputs
+
     def render_help_and_header(self, command_schema: CommandSchema):
-        gr.Markdown(
-            f"""
-            # {command_schema.name}
-            {command_schema.docstring}
-            """
-        )
+        gr.Markdown(f"""# {command_schema.name}""")
+        gr.Markdown(command_schema.docstring)
 
     def has_advanced_options(self, command_schema: CommandSchema):
         return any(not schema.required for schema in command_schema.options + command_schema.arguments)
@@ -148,63 +186,71 @@ class InterfaceBuilder:
         return inputs
 
     def sort_schemas(self, command_schema, schemas: dict):
-        order = command_schema.function.__code__.co_varnames[: command_schema.function.__code__.co_argcount]
+        function = getattr(command_schema.function, "__wrapped__", command_schema.function)
+        order = function.__code__.co_varnames[: function.__code__.co_argcount]
         schemas = [schemas[name] for name in order if name in schemas]
         return schemas
 
     def get_component(self, schema: OptionSchema | ArgumentSchema):
-        component_type = schema.type.name
+
         default = None
         if schema.default.values:
             default = schema.default.values[0][0]
         if isinstance(schema, OptionSchema):
             label = schema.name[0].lstrip("-")
+            help_text = schema.help
         else:
             label = schema.name
-
+            help_text = None
         # Handle different component types
-        if component_type == "text":
-            return gr.Textbox(default, label=label)
+        if isinstance(schema.type, OutputParamType):
+            return gr.Textbox(value=schema.type.value, visible=False)
+        if isinstance(schema.type, InputParamType):
+            return schema.type.render(schema)
+        # Defaults will be moved into Types
+        component_type_name = schema.type.name
+        if component_type_name == "text":
+            return gr.Textbox(label=label, value=default, info=help_text)
 
-        elif component_type == "integer":
-            return gr.Number(default, label=label, precision=0)
+        elif component_type_name == "integer":
+            return gr.Number(label=label, precision=0, value=default, info=help_text)
 
-        elif component_type == "float":
-            return gr.Number(default, label=label)
+        elif component_type_name == "float":
+            return gr.Number(label=label, value=default, info=help_text)
 
-        elif component_type == "boolean":
-            return gr.Checkbox(default == "true", label=label)
+        elif component_type_name == "boolean":
+            return gr.Checkbox(default == "true", label=label, info=help_text)
 
-        elif component_type == "uuid":
+        elif component_type_name == "uuid":
             uuid_val = str(uuid.uuid4()) if default is None else default
-            return gr.Textbox(uuid_val, label=label)
+            return gr.Textbox(uuid_val, label=label, info=help_text)
 
-        elif component_type == "filename":
-            return gr.File(label=label)
+        elif component_type_name == "filename":
+            return gr.File(label=label, value=default)
 
-        elif component_type == "path":
-            return gr.FileExplorer(label=label, file_count="single")
+        elif component_type_name == "path":
+            return gr.FileExplorer(label=label, file_count="single", value=default)
 
-        elif component_type == "choice":
+        elif component_type_name == "choice":
             choices = schema.type.choices
-            return gr.Dropdown(choices, value=default, label=label)
+            return gr.Dropdown(choices, value=default, label=label, info=help_text)
 
-        elif component_type == "integer range":
+        elif component_type_name == "integer range":
             min_val = schema.type.min if schema.type.min is not None else 0
             max_val = schema.type.max if schema.type.max is not None else 100
-            return gr.Slider(minimum=min_val, maximum=max_val, step=1, value=default, label=label)
+            return gr.Slider(minimum=min_val, maximum=max_val, step=1, value=default, label=label, info=help_text)
 
-        elif component_type == "float range":
+        elif component_type_name == "float range":
             min_val = schema.type.min if schema.type.min is not None else 0.0
             max_val = schema.type.max if schema.type.max is not None else 1.0
-            return gr.Slider(minimum=min_val, maximum=max_val, value=default, label=label, step=0.01)
+            return gr.Slider(minimum=min_val, maximum=max_val, value=default, label=label, step=0.01, info=help_text)
 
-        elif component_type == "datetime":
+        elif component_type_name == "datetime":
             formats = (
                 schema.type.formats if schema.type.formats else ["%Y-%m-%d", "%Y-%m-%dT%H:%M:%S", "%Y-%m-%d %H:%M:%S"]
             )
-            datetime_val = default if default is not None else datetime.now().strftime(formats[0])
-            return gr.DateTime(datetime_val, label=label)
+            datetime_val = default if default is not None else datetime.now().strftime(formats[0])  # noqa: DTZ005
+            return gr.DateTime(value=datetime_val, label=label, info=help_text)
 
         else:
-            return gr.Textbox(default, label=label)
+            return gr.Textbox(value=default, label=label, info=help_text)
