@@ -55,6 +55,7 @@ Check out the live demo [here](https://colab.research.google.com/gist/Wytamma/d2
 
 ## License
 
-`guigaga` is distributed under the terms of the [MIT](https://spdx.org/licenses/MIT.html) license.
+`guigaga` is distributed under the terms of the [MIT](https://spdx.org/licenses/MIT.html) license and was heavily inspired by [trogon](https://github.com/Textualize/trogon).
 
+##
 All We Need Is GUI Ga Ga!
