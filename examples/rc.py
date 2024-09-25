@@ -3,10 +3,12 @@ import click
 from guigaga import gui
 
 
-@gui()
+@gui(catch_errors=False)
 @click.command()
 @click.argument("sequence",  type=str)
-def reverse_complement(sequence):
+@click.argument("sequence2", type=str)
+@click.pass_context
+def reverse_complement(ctx, sequence, sequence2):
     """This script computes the reverse complement of a DNA sequence."""
     complement = {"A": "T", "T": "A", "C": "G", "G": "C"}
     sequence = sequence.upper()
