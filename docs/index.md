@@ -1,7 +1,7 @@
 ---
 title: Home
 ---
-# GUIGAGA <img src='images/logo.jpg' align="right" height="210" />
+# GUIGAGA <img src='https://guigaga.wytamma.com/assets/android-chrome-512x512.png' align="right" height="210" />
 
 [![PyPI - Version](https://img.shields.io/pypi/v/guigaga.svg)](https://pypi.org/project/guigaga)
 [![PyPI - Python Version](https://img.shields.io/pypi/pyversions/guigaga.svg)](https://pypi.org/project/guigaga)
@@ -43,7 +43,7 @@ Run the script with the `gui` argument to open the [gradio](https://www.gradio.a
 $ python app.py gui
 ```
 
-![GUI](images/reverse_complement_gui.png)
+![GUI](https://raw.githubusercontent.com/Wytamma/GUIGAGA/refs/heads/master/images/reverse_complement_gui.png)
 
 Add it still works as a command line script:
 ```console
