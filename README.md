@@ -13,7 +13,7 @@ pip install guigaga
 
 ## Usage
 
-Simply decorate your script with the `@gui()` decorator to add a GUI to your click CLI.
+Simply decorate your script with the `@gui()` decorator to add a Graphical User Interface to your click CLI.
 
 ```python
 import click
