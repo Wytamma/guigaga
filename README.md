@@ -42,7 +42,7 @@ $ python app.py gui
 
 ![GUI](images/reverse_complement_gui.png)
 
-Add it still works as a command line script:
+And it still works as a command line script:
 ```console
 $ python app.py reverse_complement ATGC
 GCAT
