@@ -1,7 +1,5 @@
 import typer
 
-from guigaga.guigaga import GUIGAGA
-
 app = typer.Typer()
 
 @app.command()
@@ -14,6 +12,8 @@ def reverse_complement(sequence):
 
 @app.command()
 def gui():
+    from guigaga.guigaga import GUIGAGA  # lazy load
+
     GUIGAGA(typer.main.get_group(app)).launch()
 
 if __name__ == "__main__":
