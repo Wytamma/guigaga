@@ -281,14 +281,14 @@ class GUIGAGA:
           dict: The rendered schemas.
         """
         inputs = {}
-        schemas = command_schema.arguments + command_schema.options
+        schemas = command_schema.arguments + command_schema.options  #TODO: sort the schemas before passing them to the render function
         schemas = [
             schema
             for schema in schemas
             if (render_required and schema.required) or (render_not_required and not schema.required)
         ]
         schemas_name_map = {
-            schema.name if isinstance(schema.name, str) else schema.name[0].lstrip("-"): schema for schema in schemas
+            schema.name if isinstance(schema.name, str) else schema.name[0].lstrip("-").replace("-", "_"): schema for schema in schemas
         }
         for name, schema in schemas_name_map.items():
             component = self.get_component(schema)
@@ -347,10 +347,10 @@ class GUIGAGA:
             return gr.Textbox(label=label, value=default, info=help_text)
 
         elif component_type_name == "integer":
-            return gr.Number(label=label, precision=0, value=default, info=help_text)
+            return gr.Number(default, label=label, precision=0, info=help_text)
 
         elif component_type_name == "float":
-            return gr.Number(label=label, value=default, info=help_text)
+            return gr.Number(default, label=label, info=help_text)
 
         elif component_type_name == "boolean":
             return gr.Checkbox(default == "true", label=label, info=help_text)
