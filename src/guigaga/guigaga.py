@@ -6,7 +6,6 @@ from typing import Callable, Optional, Union
 import click
 import gradio as gr
 from gradio import Blocks, TabbedInterface
-from gradio.themes.base import Base
 
 from guigaga.introspect import ArgumentSchema, CommandSchema, OptionSchema, introspect_click_app
 from guigaga.logger import Logger
@@ -64,10 +63,10 @@ class GUIGAGA:
             self.version = None
         # Traverse the command tree and create the interface
         if isinstance(self.command_schemas, dict) and "root" in self.command_schemas:
-            schemas = self.command_schemas["root"]
+            schema_tree = self.command_schemas["root"]
         else:
-            schemas = next(iter(self.command_schemas.values()))
-        self.interface = self.traverse_command_tree(schemas)
+            schema_tree = next(iter(self.command_schemas.values()))
+        self.interface = self.traverse_command_tree(schema_tree)
 
     def launch(self, queue_kwargs: Optional[dict] = None, launch_kwargs: Optional[dict] = None):
         """
@@ -112,7 +111,8 @@ class GUIGAGA:
             if schema.name == "root":
                 with gr.Blocks() as block:
                     version = f" (v{self.version})" if self.version else ""
-                    gr.Markdown(f"""# {self.cli.name.upper()}{version}\n{schema.docstring}""")
+                    name = self.app_name if self.app_name else self.cli.name.upper()
+                    gr.Markdown(f"""# {name}{version}\n{schema.docstring}""")
                     # gr.Markdown(f"{schema.docstring}")
                     TabbedInterface(interface_list, tab_names=tab_names, analytics_enabled=False)
                 return block
