@@ -5,6 +5,7 @@ from abc import ABC, abstractmethod
 from click import ParamType as ClickParamType
 from click import Path as ClickPath
 from gradio import File
+from gradio import FileExplorer as GradioFileExplorer
 from gradio.components.base import Component
 
 from guigaga.introspect import ArgumentSchema, OptionSchema
@@ -137,3 +138,30 @@ class Download(OutputParamType, ClickPath):
           Component: The rendered component.
         """
         return File(label=schema.name)
+
+
+class FileExplorer(InputParamType, ClickPath):
+    """
+    A class that inherits from InputParamType and ClickPath. It represents a file explorer parameter type.
+    """
+    def __init__(self, *args, **kwargs):
+        """
+        Initializes a FileExplorer instance.
+
+        Args:
+          *args: Variable length argument list.
+          **kwargs: Arbitrary keyword arguments.
+        """
+        super().__init__(*args, **kwargs)
+
+    def render(self, schema: OptionSchema | ArgumentSchema) -> Component:
+        """
+        Renders the file explorer component.
+
+        Args:
+          schema (OptionSchema | ArgumentSchema): The schema to render.
+
+        Returns:
+          Component: The rendered component.
+        """
+        return GradioFileExplorer(label=schema.name, file_count="single", value=schema.default)

@@ -48,7 +48,7 @@ class GUIGAGA:
           - Calls traverse_command_tree to create the interface.
         """
         self.cli = cli
-        self.app_name = app_name
+        self.app_name = app_name if app_name else self.cli.name.upper()
         self.command_name = command_name
         self.theme = theme
         self.hide_not_required = hide_not_required
@@ -111,10 +111,9 @@ class GUIGAGA:
             tab_names = [name for name, _ in tab_blocks]
             interface_list = [block for _, block in tab_blocks]
             if schema.name == "root":
-                with gr.Blocks(theme=self.theme) as block:
+                with gr.Blocks(theme=self.theme, analytics_enabled=False, title=self.app_name) as block:
                     version = f" (v{self.version})" if self.version else ""
-                    name = self.app_name if self.app_name else self.cli.name.upper()
-                    gr.Markdown(f"""# {name}{version}\n{schema.docstring}""")
+                    gr.Markdown(f"""# {self.app_name}{version}\n{schema.docstring}""")
                     # gr.Markdown(f"{schema.docstring}")
                     TabbedInterface(interface_list, tab_names=tab_names, analytics_enabled=False)
                 return block
@@ -141,7 +140,7 @@ class GUIGAGA:
           - Defines the run_command function.
         """
         logger = Logger()
-        with Blocks() as block:
+        with Blocks(theme=self.theme, analytics_enabled=False, title=self.app_name) as block:
             self.render_help_and_header(command_schema)
             with gr.Row():
                 with gr.Column():
@@ -359,7 +358,7 @@ class GUIGAGA:
             return gr.File(label=label, value=default)
 
         elif component_type_name == "path":
-            return gr.FileExplorer(label=label, file_count="single", value=default)
+            return gr.File(label=label, value=default)
 
         elif component_type_name == "choice":
             choices = schema.type.choices
