@@ -26,7 +26,7 @@ class GUIGAGA:
         *,
         theme: GradioTheme | str = "soft",
         hide_not_required: bool = False,
-        allow_file_download: bool = True,
+        allow_file_download: bool = False,
         catch_errors: bool = True,
     ):
         """
@@ -39,7 +39,7 @@ class GUIGAGA:
           click_context (click.Context): The context of the click command. Defaults to None.
           theme (GradioTheme): The theme of the GUI. Defaults to Soft.
           hide_not_required (bool): Whether to hide not required options. Defaults to False.
-          allow_file_download (bool): Whether to allow file download. Defaults to True.
+          allow_file_download (bool): Whether to allow file download. Defaults to False.
           catch_errors (bool): Whether to catch errors. Defaults to True.
 
         Side Effects:
