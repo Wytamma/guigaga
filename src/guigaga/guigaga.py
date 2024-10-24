@@ -56,8 +56,6 @@ class GUIGAGA:
         self.catch_errors = catch_errors
         self.command_schemas = introspect_click_app(cli)
         self.blocks = []
-        if click_context is None:
-            click_context = click.get_current_context()
         self.click_context = click_context
         try:
             self.version = metadata.version(self.click_app_name)

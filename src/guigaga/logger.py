@@ -78,8 +78,11 @@ def wrap_for_process(fn: Callable, ctx) -> Callable:
     def _inner(*args, **kwargs):
         with redirect_stdout(CapturingStream(stdout_queue)), redirect_stderr(CapturingStream(stderr_queue)):
             try:
-                # Use the context within the thread
-                with ctx:
+                if ctx:
+                    # Use the context within the thread
+                    with ctx:
+                        fn(*args, **kwargs)
+                else:
                     fn(*args, **kwargs)
             except Exception as error:
                 msg = (
