@@ -13,8 +13,8 @@ def reverse_complement(sequence):
     typer.echo(result)
 
 @app.command()
-def gui(ctx: typer.Context):
-    GUIGAGA(typer.main.get_group(app), click_context=ctx).launch()
+def gui():
+    GUIGAGA(typer.main.get_group(app)).launch()
 
 if __name__ == "__main__":
     app()
