@@ -281,7 +281,7 @@ class GUIGAGA:
           dict: The rendered schemas.
         """
         inputs = {}
-        schemas = command_schema.options + command_schema.arguments
+        schemas = command_schema.arguments + command_schema.options
         schemas = [
             schema
             for schema in schemas
