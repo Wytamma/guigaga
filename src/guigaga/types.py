@@ -1,7 +1,6 @@
 import pathlib
 import tempfile
 from abc import ABC, abstractmethod
-from typing import Optional
 
 from click import ParamType as ClickParamType
 from click import Path as ClickPath
