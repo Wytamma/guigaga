@@ -6,10 +6,10 @@ from typing import Callable, Optional, Union
 import click
 import gradio as gr
 from gradio import Blocks, TabbedInterface
+from gradio import Theme as GradioTheme
 
 from guigaga.introspect import ArgumentSchema, CommandSchema, OptionSchema, introspect_click_app
 from guigaga.logger import Logger
-from guigaga.themes import Theme
 from guigaga.types import InputParamType, OutputParamType
 
 
@@ -24,7 +24,7 @@ class GUIGAGA:
         command_name: str = "gui",
         click_context: click.Context = None,
         *,
-        theme: Theme = Theme.soft,
+        theme: GradioTheme | str = "soft",
         hide_not_required: bool = False,
         allow_file_download: bool = True,
         catch_errors: bool = True,
@@ -37,7 +37,7 @@ class GUIGAGA:
           app_name (str | None): The name of the application. Defaults to None.
           command_name (str): The name of the command. Defaults to "gui".
           click_context (click.Context): The context of the click command. Defaults to None.
-          theme (Theme): The theme of the GUI. Defaults to Theme.soft.
+          theme (GradioTheme): The theme of the GUI. Defaults to Soft.
           hide_not_required (bool): Whether to hide not required options. Defaults to False.
           allow_file_download (bool): Whether to allow file download. Defaults to True.
           catch_errors (bool): Whether to catch errors. Defaults to True.
@@ -111,7 +111,7 @@ class GUIGAGA:
             tab_names = [name for name, _ in tab_blocks]
             interface_list = [block for _, block in tab_blocks]
             if schema.name == "root":
-                with gr.Blocks() as block:
+                with gr.Blocks(theme=self.theme) as block:
                     version = f" (v{self.version})" if self.version else ""
                     name = self.app_name if self.app_name else self.cli.name.upper()
                     gr.Markdown(f"""# {name}{version}\n{schema.docstring}""")
@@ -141,8 +141,7 @@ class GUIGAGA:
           - Defines the run_command function.
         """
         logger = Logger()
-
-        with Blocks(theme=self.theme.value) as block:
+        with Blocks() as block:
             self.render_help_and_header(command_schema)
             with gr.Row():
                 with gr.Column():
@@ -407,7 +406,7 @@ def gui(
     command_name: str = "gui",
     message: str = "Open Gradio GUI.",
     *,
-    theme: Theme = Theme.soft,
+    theme: GradioTheme | str = "monochrome",
     hide_not_required: bool = False,
     allow_file_download: bool = False,
     launch_kwargs: Optional[dict] = None,
@@ -421,7 +420,7 @@ def gui(
       name (Optional[str]): The name of the application. Defaults to None.
       command_name (str): The name of the command to open the GUI. Defaults to "gui".
       message (str): The message to display when the GUI is opened. Defaults to "Open Gradio GUI."
-      theme (Theme): The theme to use for the GUI. Defaults to Theme.soft.
+      theme (Theme): The theme to use for the GUI. Defaults to Theme.Monochrome.
       hide_not_required (bool): Whether to hide options that are not required. Defaults to False.
       allow_file_download (bool): Whether to allow file downloads. Defaults to False.
       launch_kwargs (Optional[dict]): Additional keyword arguments to pass to the launch method. Defaults to None.

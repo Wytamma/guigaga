@@ -2,7 +2,6 @@
 #
 # SPDX-License-Identifier: MIT
 from guigaga.guigaga import gui
-from guigaga.themes import Theme
 from guigaga.types import Upload, Download
 
-__all__ = ["gui", "Theme", "Upload", "Download"]
+__all__ = ["gui", "Upload", "Download"]
