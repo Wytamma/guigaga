@@ -48,7 +48,7 @@ $ python app.py reverse_complement ATGC
 GCAT
 ```
 
-Check out the live demo [here](https://colab.research.google.com/gist/Wytamma/d2856c9258258f354e99c7eedffe6b07/guigaga.ipynb).
+Check out the live demo [here](https://huggingface.co/spaces/wytamma/guigaga-example) or [colab](https://colab.research.google.com/gist/Wytamma/d2856c9258258f354e99c7eedffe6b07/guigaga.ipynb).
 
 ## License
 
