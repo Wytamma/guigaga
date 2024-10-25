@@ -1,4 +1,4 @@
-# GUIGAGA <img src='images/logo.jpg' align="right" height="210" />
+# Guigaga <img src='images/logo.jpg' align="right" height="210" />
 
 [![PyPI - Version](https://img.shields.io/pypi/v/guigaga.svg)](https://pypi.org/project/guigaga)
 [![PyPI - Python Version](https://img.shields.io/pypi/pyversions/guigaga.svg)](https://pypi.org/project/guigaga)
