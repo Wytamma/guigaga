@@ -1,7 +1,7 @@
 ---
 title: Home
 ---
-# GUIGAGA <img src='https://guigaga.wytamma.com/assets/android-chrome-192x192.png' align="right" height="210" />
+# Guigaga <img src='https://guigaga.wytamma.com/assets/android-chrome-192x192.png' align="right" height="210" />
 
 [![PyPI - Version](https://img.shields.io/pypi/v/guigaga.svg)](https://pypi.org/project/guigaga)
 [![PyPI - Python Version](https://img.shields.io/pypi/pyversions/guigaga.svg)](https://pypi.org/project/guigaga)
